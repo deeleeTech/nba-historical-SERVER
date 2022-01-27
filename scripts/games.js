@@ -11,7 +11,8 @@ let teamsData = [];
   
 const gamesSheets = gamesFile.SheetNames;
 const teamsSheets = teamsFile.SheetNames;
-  
+
+//GET TEAMS ARRAY
 for(let i = 0; i < teamsSheets.length; i++)
 {
    const temp = reader.utils.sheet_to_json(
@@ -21,6 +22,20 @@ for(let i = 0; i < teamsSheets.length; i++)
    })
 }
 
+function getTeamID(teamNickname){
+   let teamIDnumber;
+   teamsData.map((eachTeam)=>{
+      if(eachTeam.NICKNAME == teamNickname){
+         teamIDnumber = eachTeam.TEAM_ID;
+      }
+   })
+   return teamIDnumber
+}
+
+const soloTeamID = getTeamID('Rockets');
+const seasonYear = 2021
+
+//CREATE GAMES ARRAY
 for(let i = 0; i < gamesSheets.length; i++)
 {
    const temp = reader.utils.sheet_to_json(
@@ -28,20 +43,25 @@ for(let i = 0; i < gamesSheets.length; i++)
    temp.forEach((res) => {
       let homeID = res.HOME_TEAM_ID;
       let awayID = res.VISITOR_TEAM_ID;
-      //joins IDS to team nicknames of home and visitor teams
-      teamsData.map((eachTeam)=>{
-         if(eachTeam.TEAM_ID == homeID){
-            res.HOME_TEAM_ID = eachTeam.NICKNAME;
-         }
-         else if(eachTeam.TEAM_ID == awayID){
-            res.VISITOR_TEAM_ID = eachTeam.NICKNAME
-         }
-      })
-      //deletes fields i dont wanna see
-      delete res.TEAM_ID_home;
-      delete res.TEAM_ID_away;
-      
-      gamesData.push(res)
+      let gameSeason = res.SEASON;
+      if((soloTeamID == homeID || soloTeamID == awayID) && gameSeason == seasonYear){ // VALIDATION FILTER
+         teamsData.map((eachTeam)=>{
+            if(eachTeam.TEAM_ID == homeID){ //REPLEACE ID WITH ACTUAL TEAM NICKNAME
+               res.HOME_TEAM_NAME = eachTeam.NICKNAME;
+            }
+            else if(eachTeam.TEAM_ID == awayID){//REPLEACE ID WITH ACTUAL TEAM NICKNAME
+               res.VISITOR_TEAM_NAME = eachTeam.NICKNAME
+            }
+         })
+         //deletes redundant fields
+         delete res.TEAM_ID_home;
+         delete res.TEAM_ID_away;
+         //rewrites WINNER
+         res.HOME_TEAM_WINS == 1 ? res.WINNING_TEAM = res.HOME_TEAM_NAME : res.WINNING_TEAM = res.VISITOR_TEAM_NAME;
+         delete res.HOME_TEAM_WINS;
+
+         gamesData.push(res)
+      }
    })
 }
   
